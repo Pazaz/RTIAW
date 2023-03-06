@@ -1,3 +1,5 @@
+import { saveText } from './Util.js';
+
 class Render {
     width;
     height;
@@ -19,6 +21,46 @@ class Render {
 
     setPixel(x, y, color) {
         throw new Error('Not implemented');
+    }
+}
+
+export class PpmRender extends Render {
+    data = [];
+
+    constructor(width, height) {
+        super(width, height);
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                this.data.push(new Color(0, 0, 0));
+            }
+        }
+    }
+
+    draw() {
+        let result = `P3 ${this.width} ${this.height} 255`;
+
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                let color = this.data[x + (y * this.width)];
+                result += `\n${Math.floor(color.r * 255)} ${Math.floor(color.g * 255)} ${Math.floor(color.b * 255)}`;
+            }
+        }
+
+        saveText('image.ppm', result);
+        return result;
+    }
+
+    clear(color) {
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                this.setPixel(x, y, color);
+            }
+        }
+    }
+
+    setPixel(x, y, color) {
+        this.data[x + (y * this.width)] = color;
     }
 }
 
