@@ -29,10 +29,11 @@ export function rayColor(r, background, world, depth) {
 
     let scattered = new Ray();
     let attenuation = vec3.create();
+    let emitted = rec.material.emitted(rec.u, rec.v, rec.p);
 
-    if (rec.material.scatter(r, rec, attenuation, scattered)) {
-        return vec3.mul(vec3.create(), attenuation, rayColor(scattered, background, world, depth - 1));
+    if (!rec.material.scatter(r, rec, attenuation, scattered)) {
+        return emitted;
     }
 
-    return vec3.create();
+    return vec3.add(vec3.create(), emitted, vec3.mul(vec3.create(), attenuation, rayColor(scattered, background, world, depth - 1)));
 }

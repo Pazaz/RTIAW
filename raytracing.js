@@ -2,7 +2,7 @@ import { glMatrix, vec3 } from './gl-matrix.js';
 glMatrix.setMatrixArrayType(Array);
 
 import { HittableList, MovingSphere, Sphere } from './Hittable.js';
-import { Lambertian, Metal, Dielectric } from './Material.js';
+import { Lambertian, Metal, Dielectric, DiffuseLight } from './Material.js';
 import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
 import { CanvasRender } from './Render.js';
@@ -14,7 +14,7 @@ import { CheckerTexture, ImageTexture, NoiseTexture, SolidColor } from './Textur
 let render = new CanvasRender(document.getElementById('canvas'));
 render.clear(vec3.create());
 
-const samplesPerPixel = 20;
+let samplesPerPixel = 10;
 const maxDepth = 50;
 
 // World
@@ -106,6 +106,14 @@ async function earth() {
 function simpleLight() {
     let world = new HittableList();
 
+    let checker = new CheckerTexture(new SolidColor(vec3.fromValues(0.2, 0.3, 0.1)), new SolidColor(vec3.fromValues(0.9, 0.9, 0.9)));
+
+    world.add(new Sphere(vec3.fromValues(0, -1000, 0), 1000, new Lambertian(checker)));
+    world.add(new Sphere(vec3.fromValues(0, 2, 0), 2, new Lambertian(checker)));
+
+    let difflight = new DiffuseLight(new SolidColor(vec3.fromValues(4, 4, 4)));
+    world.add(new Sphere(vec3.fromValues(0, 7, 0), 2, difflight));
+
     return world;
 }
 
@@ -119,7 +127,7 @@ let background = vec3.create();
 
 // Camera
 
-switch (3) {
+switch (0) {
     case 1:
         world = randomScene();
         background = vec3.fromValues(0.70, 0.80, 1.00);
@@ -154,7 +162,11 @@ switch (3) {
     default:
     case 5:
         world = simpleLight();
+        samplesPerPixel = 100;
         background = vec3.create();
+        lookFrom = vec3.fromValues(26, 3, 6);
+        lookAt = vec3.fromValues(0, 2, 0);
+        vFov = 20.0;
         break;
 }
 

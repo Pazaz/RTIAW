@@ -5,6 +5,10 @@ export class Material {
     scatter(rIn, rec, attenuation, scattered) {
         return false;
     }
+
+    emitted(u, v, p) {
+        return vec3.create();
+    }
 }
 
 export class Lambertian extends Material {
@@ -90,5 +94,23 @@ export class Dielectric extends Material {
         let r0 = (1.0 - refIdx) / (1.0 + refIdx);
         r0 = r0 * r0;
         return r0 + ((1.0 - r0) * Math.pow((1.0 - cosine), 5.0));
+    }
+}
+
+export class DiffuseLight extends Material {
+    emit;
+
+    constructor(emit) {
+        super();
+
+        this.emit = emit;
+    }
+
+    scatter(rIn, rec, attenuation, scattered) {
+        return false;
+    }
+
+    emitted(u, v, p) {
+        return this.emit.value(u, v, p);
     }
 }
