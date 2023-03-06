@@ -7,7 +7,7 @@ import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
 import { CanvasRender } from './Render.js';
 import { clamp, sleep } from './Util.js';
-import { CheckerTexture, SolidColor } from './Texture.js';
+import { CheckerTexture, NoiseTexture, SolidColor } from './Texture.js';
 
 /// ----
 
@@ -84,11 +84,22 @@ function twoSpheres() {
     return world;
 }
 
+function twoPerlinSpheres() {
+    let world = new HittableList();
+
+    let pertext = new NoiseTexture(4.0);
+    world.add(new Sphere(vec3.fromValues(0, -1000, 0), 1000, new Lambertian(pertext)));
+    world.add(new Sphere(vec3.fromValues(0, 2, 0), 2, new Lambertian(pertext)));
+
+    return world;
+}
+
 let world = null;
 let lookFrom = vec3.create();
 let lookAt = vec3.create();
 let vFov = 40.0;
 let aperture = 0.0;
+let distToFocus = 10.0;
 
 // Camera
 
@@ -100,17 +111,24 @@ switch (0) {
         vFov = 20.0;
         aperture = 0.1;
         break;
-    default:
     case 2:
         world = twoSpheres();
         lookFrom = vec3.fromValues(13, 2, 3);
         lookAt = vec3.fromValues(0, 0, 0);
         vFov = 20.0;
         break;
+    default:
+    case 3:
+        world = twoPerlinSpheres();
+        lookFrom = vec3.fromValues(13, 2, 3);
+        lookAt = vec3.fromValues(0, 0, 0);
+        vFov = 20.0;
+        aperture = 0.1;
+        distToFocus = 12.0;
+        break;
 }
 
 let vUp = vec3.fromValues(0, 1, 0);
-let distToFocus = 10.0;
 let camera = new Camera(lookFrom, lookAt, vUp, vFov, render.aspectRatio, aperture, distToFocus, 0.0, 1.0);
 
 // Render

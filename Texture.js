@@ -1,4 +1,5 @@
 import { vec3 } from './gl-matrix.js';
+import { Perlin } from './Perlin.js';
 
 export class Texture {
     value(u, v, p) {
@@ -36,5 +37,20 @@ export class CheckerTexture extends Texture {
         } else {
             return this.even.value(u, v, p);
         }
+    }
+}
+
+export class NoiseTexture extends Texture {
+    scale;
+
+    constructor(scale) {
+        super();
+
+        this.scale = scale;
+    }
+
+    value(u, v, p) {
+        // return vec3.scale(vec3.create(), vec3.fromValues(1, 1, 1), Perlin.turb(vec3.scale(vec3.create(), p, this.scale)));
+        return vec3.scale(vec3.create(), vec3.fromValues(1, 1, 1), 0.5 * (1 + Math.sin(this.scale * p[2] + 10 * Perlin.turb(p))));
     }
 }
