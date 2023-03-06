@@ -1,20 +1,30 @@
-import { Vec3, Point3 } from './Vec3.js';
+import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
 
 export class HitRecord {
-    p = new Point3(0, 0, 0);
-    normal = new Vec3(0, 0, 0);
-    material;
-    t = 0;
-    frontFace = true;
+    p = vec3.create();
+    normal = vec3.create();
+    material = null;
+    t = 0.0;
+    frontFace = false;
 
-    setFaceNormal(r, outward_normal) {
-        this.frontFace = r.dir.dot(outward_normal) < 0;
-        this.normal = this.frontFace ? outward_normal : outward_normal.mulScalar(-1);
+    setFaceNormal(r, outwardNormal) {
+        this.frontFace = vec3.dot(r.direction, outwardNormal) < 0;
+        vec3.copy(this.normal, this.frontFace ? outwardNormal : vec3.negate(vec3.create(), outwardNormal));
+    }
+
+    copy(other) {
+        vec3.copy(this.p, other.p);
+        vec3.copy(this.normal, other.normal);
+        this.t = other.t;
+        this.frontFace = other.frontFace;
+        this.material = other.material;
     }
 }
 
 export class Hittable {
-    hit(r, tMin, tMax, rec) { }
+    hit(r, tMin, tMax, rec) {
+        return false;
+    }
 }
 
 export class HittableList extends Hittable {
@@ -45,42 +55,34 @@ export class HittableList extends Hittable {
             if (object.hit(r, tMin, closestSoFar, tempRec)) {
                 hitAnything = true;
                 closestSoFar = tempRec.t;
-                rec = tempRec;
+                rec.copy(tempRec);
             }
         }
 
-        return { hitAnything, rec };
+        return hitAnything;
     }
 }
 
 export class Sphere extends Hittable {
-    center = new Point3(0, 0, 0);
-    radius;
-    material;
+    center = vec3.create();
+    radius = 0.0;
+    material = null;
 
-    constructor(center, radius = 0.0, material) {
+    constructor(center, radius, material) {
         super();
 
-        if (center instanceof Point3) {
-            this.center = center;
-        }
-
-        if (radius) {
-            this.radius = radius;
-        }
-
-        if (material) {
-            this.material = material;
-        }
+        this.center = center;
+        this.radius = radius;
+        this.material = material;
     }
 
     hit(r, tMin, tMax, rec) {
-        let oc = r.orig.sub(this.center);
-        let a = r.dir.lengthSquared();
-        let halfB = oc.dot(r.dir);
-        let c = oc.lengthSquared() - this.radius * this.radius;
+        let oc = vec3.sub(vec3.create(), r.origin, this.center);
+        let a = vec3.squaredLength(r.direction);
+        let halfB = vec3.dot(oc, r.direction);
+        let c = vec3.squaredLength(oc) - (this.radius * this.radius);
 
-        let discriminant = halfB * halfB - a * c;
+        let discriminant = (halfB * halfB) - a * c;
         if (discriminant < 0) {
             return false;
         }
@@ -97,7 +99,9 @@ export class Sphere extends Hittable {
 
         rec.t = root;
         rec.p = r.at(rec.t);
-        let outwardNormal = rec.p.sub(this.center).divScalar(this.radius);
+        let outwardNormal = vec3.create();
+        vec3.sub(outwardNormal, rec.p, this.center);
+        vec3.scale(outwardNormal, outwardNormal, 1.0 / this.radius);
         rec.setFaceNormal(r, outwardNormal);
         rec.material = this.material;
 

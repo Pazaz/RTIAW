@@ -91,9 +91,9 @@ export class CanvasRender extends Render {
 
     setPixel(x, y, color) {
         let index = (x + (y * this.width)) * 4;
-        this.imageData.data[index + 0] = color.r() * 255.99;
-        this.imageData.data[index + 1] = color.g() * 255.99;
-        this.imageData.data[index + 2] = color.b() * 255.99;
+        this.imageData.data[index + 0] = color[0];
+        this.imageData.data[index + 1] = color[1];
+        this.imageData.data[index + 2] = color[2];
         this.imageData.data[index + 3] = 255;
     }
 }

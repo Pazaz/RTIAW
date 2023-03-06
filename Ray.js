@@ -1,38 +1,39 @@
-import { Color } from './Vec3.js';
+import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { HitRecord } from './Hittable.js';
 
 export class Ray {
-    orig;
-    dir;
+    origin;
+    direction;
 
     constructor(origin, direction) {
-        this.orig = origin;
-        this.dir = direction;
+        this.origin = origin;
+        this.direction = direction;
     }
 
     at(t) {
-        return this.orig.add(this.dir.mulScalar(t));
+        return vec3.add(vec3.create(), this.origin, vec3.scale(vec3.create(), this.direction, t));
     }
 }
 
 export function rayColor(r, world, depth) {
     if (depth <= 0) {
-        return new Color(0, 0, 0);
+        return vec3.fromValues(0, 0, 0);
     }
 
-    let hitResult = world.hit(r, 0.001, Infinity);
-    if (hitResult.hitAnything) {
-        let rec = hitResult.rec;
+    let rec = new HitRecord();
+    if (world.hit(r, 0.001, Infinity, rec)) {
+        let scattered = new Ray();
+        let attenuation = vec3.create();
 
-        let scatterResult = rec.material.scatter(r, rec);
-        if (scatterResult) {
-            let { attenuation, scattered } = scatterResult;
-            return attenuation.mul(rayColor(scattered, world, depth - 1));
+        if (rec.material.scatter(r, rec, attenuation, scattered)) {
+            return vec3.mul(vec3.create(), attenuation, rayColor(scattered, world, depth - 1));
         }
 
-        return new Color(0, 0, 0);
+        return vec3.fromValues(0, 0, 0);
     }
 
-    let unitDirection = r.dir.unitVector();
-    let t = 0.5 * (unitDirection.y() + 1.0);
-    return new Color(1.0, 1.0, 1.0).mulScalar(1.0 - t).add(new Color(0.5, 0.7, 1.0).mulScalar(t));
+    // draw sky
+    let unitDirection = vec3.normalize(vec3.create(), r.direction);
+    let t = 0.5 * (unitDirection[1] + 1.0);
+    return vec3.add(vec3.create(), vec3.scale(vec3.create(), vec3.fromValues(1.0, 1.0, 1.0), 1.0 - t), vec3.scale(vec3.create(), vec3.fromValues(0.5, 0.7, 1.0), t));
 }

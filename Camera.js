@@ -1,5 +1,5 @@
-import { degreesToRadians } from './Util.js';
-import { Vec3 } from './Vec3.js';
+import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { degreesToRadians, randomInUnitDisk } from './Util.js';
 import { Ray } from './Ray.js';
 
 export class Camera {
@@ -12,31 +12,42 @@ export class Camera {
     w;
     lensRadius;
 
-    constructor(lookFrom, lookAt, vup, vfov, aspectRatio, aperture, focusDist) {
-        let theta = degreesToRadians(vfov);
-        let h = Math.tan(theta / 2);
+    constructor(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, focusDistance) {
+        let theta = degreesToRadians(vFov);
+        let h = Math.tan(theta / 2.0);
         let viewportHeight = 2.0 * h;
         let viewportWidth = aspectRatio * viewportHeight;
 
-        this.w = lookFrom.sub(lookAt).unitVector();
-        this.u = vup.cross(this.w).unitVector();
-        this.v = this.w.cross(this.u);
+        this.w = vec3.normalize(vec3.create(), vec3.sub(vec3.create(), lookFrom, lookAt));
+        this.u = vec3.normalize(vec3.create(), vec3.cross(vec3.create(), vUp, this.w));
+        this.v = vec3.cross(vec3.create(), this.w, this.u);
 
         this.origin = lookFrom;
-        this.horizontal = this.u.mulScalar(viewportWidth * focusDist);
-        this.vertical = this.v.mulScalar(viewportHeight * focusDist);
-        this.lowerLeftCorner = this.origin.sub(this.horizontal.divScalar(2)).sub(this.vertical.divScalar(2)).sub(this.w.mulScalar(focusDist));
+        this.horizontal = vec3.scale(vec3.create(), this.u, viewportWidth * focusDistance);
+        this.vertical = vec3.scale(vec3.create(), this.v, viewportHeight * focusDistance);
 
-        this.lensRadius = aperture / 2;
+        let step1 = vec3.scale(vec3.create(), this.horizontal, 0.5);
+        let step2 = vec3.scale(vec3.create(), this.vertical, 0.5);
+        let step3 = vec3.sub(vec3.create(), this.origin, step1);
+        let step4 = vec3.sub(vec3.create(), step3, step2);
+        this.lowerLeftCorner = vec3.sub(vec3.create(), step4, vec3.scale(vec3.create(), this.w, focusDistance));
+
+        this.lensRadius = aperture / 2.0;
     }
 
     getRay(s, t) {
-        let rd = Vec3.randomInUnitDisk().mulScalar(this.lensRadius);
-        let offset = this.u.mulScalar(rd.x()).add(this.v.mulScalar(rd.y()));
+        let rd = vec3.scale(vec3.create(), randomInUnitDisk(), this.lensRadius);
+        let offset = vec3.add(vec3.create(), vec3.scale(vec3.create(), this.u, rd[0]), vec3.scale(vec3.create(), this.v, rd[1]));
+
+        let step1 = vec3.scale(vec3.create(), this.horizontal, s);
+        let step2 = vec3.scale(vec3.create(), this.vertical, t);
+        let step3 = vec3.add(vec3.create(), this.lowerLeftCorner, step1);
+        let step4 = vec3.add(vec3.create(), step3, step2);
+        let step5 = vec3.sub(vec3.create(), step4, this.origin);
 
         return new Ray(
-            this.origin.add(offset),
-            this.lowerLeftCorner.add(this.horizontal.mulScalar(s)).add(this.vertical.mulScalar(t)).sub(this.origin).sub(offset)
+            vec3.add(vec3.create(), this.origin, offset),
+            vec3.sub(vec3.create(), step5, offset)
         );
     }
 }

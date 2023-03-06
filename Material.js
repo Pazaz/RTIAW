@@ -1,29 +1,32 @@
-import { Vec3, Color } from './Vec3.js';
-import { Ray } from './Ray.js';
+import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { nearZero, randomInUnitSphere, randomUnitVector, reflect, refract } from './Util.js';
 
 export class Material {
-    scatter(r, rec, attenuation, scattered) { }
+    scatter(rIn, rec, attenuation, scattered) {
+        return false;
+    }
 }
 
 export class Lambertian extends Material {
     albedo;
 
-    constructor(a) {
+    constructor(albedo) {
         super();
 
-        this.albedo = a;
+        this.albedo = albedo;
     }
 
-    scatter(r, rec) {
-        let scatterDirection = rec.normal.add(Vec3.randomUnitVector());
+    scatter(rIn, rec, attenuation, scattered) {
+        let scatterDirection = vec3.add(vec3.create(), rec.normal, randomUnitVector());
 
-        if (scatterDirection.nearZero()) {
+        if (nearZero(scatterDirection)) {
             scatterDirection = rec.normal;
         }
 
-        let scattered = new Ray(rec.p, scatterDirection);
-        let attenuation = this.albedo;
-        return { scattered, attenuation };
+        scattered.origin = rec.p;
+        scattered.direction = scatterDirection;
+        vec3.copy(attenuation, this.albedo);
+        return true;
     }
 }
 
@@ -31,54 +34,58 @@ export class Metal extends Material {
     albedo;
     fuzz;
 
-    constructor(a, f = 0.0) {
+    constructor(albedo, fuzz) {
         super();
 
-        this.albedo = a;
-        this.fuzz = f < 1 ? f : 1;
+        this.albedo = albedo;
+        this.fuzz = fuzz;
     }
 
-    scatter(r, rec) {
-        let reflected = Vec3.reflect(r.dir.unitVector(), rec.normal);
-        let scattered = new Ray(rec.p, reflected.add(Vec3.randomInUnitSphere().mulScalar(this.fuzz)));
-        let attenuation = this.albedo;
-        return { scattered, attenuation };
+    scatter(rIn, rec, attenuation, scattered) {
+        let reflected = reflect(vec3.normalize(vec3.create(), rIn.direction), rec.normal);
+
+        scattered.origin = rec.p;
+        scattered.direction = vec3.add(vec3.create(), reflected, vec3.scale(vec3.create(), randomInUnitSphere(), this.fuzz));
+        vec3.copy(attenuation, this.albedo);
+        return true;
     }
 }
 
 export class Dielectric extends Material {
     refIdx;
 
-    constructor(ri) {
+    constructor(refIdx) {
         super();
 
-        this.refIdx = ri;
+        this.refIdx = refIdx;
     }
 
-    scatter(r, rec) {
-        let attenuation = new Color(1.0, 1.0, 1.0);
+    scatter(rIn, rec, attenuation, scattered) {
+        vec3.copy(attenuation, vec3.fromValues(1.0, 1.0, 1.0));
         let refractionRatio = rec.frontFace ? (1.0 / this.refIdx) : this.refIdx;
 
-        let unitDirection = r.dir.unitVector();
-        let cosTheta = Math.min(-unitDirection.dot(rec.normal), 1.0);
-        let sinTheta = Math.sqrt(1.0 - cosTheta * cosTheta);
+        let unitDirection = vec3.normalize(vec3.create(), rIn.direction);
+
+        let cosTheta = Math.min(vec3.dot(vec3.negate(vec3.create(), unitDirection), rec.normal), 1.0);
+        let sinTheta = Math.sqrt(1.0 - (cosTheta * cosTheta));
 
         let cannotRefract = refractionRatio * sinTheta > 1.0;
-        let direction;
+        let direction = vec3.create();
 
         if (cannotRefract || this.reflectance(cosTheta, refractionRatio) > Math.random()) {
-            direction = Vec3.reflect(unitDirection, rec.normal);
+            vec3.copy(direction, reflect(unitDirection, rec.normal));
         } else {
-            direction = Vec3.refract(unitDirection, rec.normal, refractionRatio);
+            vec3.copy(direction, refract(unitDirection, rec.normal, refractionRatio));
         }
 
-        let scattered = new Ray(rec.p, direction);
-        return { scattered, attenuation };
+        scattered.origin = rec.p;
+        scattered.direction = direction;
+        return true;
     }
 
     reflectance(cosine, refIdx) {
-        let r0 = (1 - refIdx) / (1 + refIdx);
+        let r0 = (1.0 - refIdx) / (1.0 + refIdx);
         r0 = r0 * r0;
-        return r0 + (1 - r0) * Math.pow((1 - cosine), 5);
+        return r0 + ((1.0 - r0) * Math.pow((1.0 - cosine), 5.0));
     }
 }
