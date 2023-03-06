@@ -34,13 +34,12 @@ function randomScene() {
 
                 if (chooseMat < 0.8) {
                     // diffuse
-                    let albedo = vec3.create();
-                    vec3.mul(albedo, vec3.random(vec3.create()), vec3.random(vec3.create()));
+                    let albedo = vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random());
                     sphereMaterial = new Lambertian(albedo);
                     world.add(new Sphere(center, 0.2, sphereMaterial));
                 } else if (chooseMat < 0.95) {
                     // metal
-                    let albedo = vec3.random(vec3.create());
+                    let albedo = vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random());
                     let fuzz = Math.random() * 0.5;
                     sphereMaterial = new Metal(albedo, fuzz);
                     world.add(new Sphere(center, 0.2, sphereMaterial));
@@ -119,9 +118,6 @@ for (let j = render.height - 1; j >= 0; --j) {
         let b = pixelColor[2];
 
         let scale = 1.0 / samplesPerPixel;
-        // r *= scale;
-        // g *= scale;
-        // b *= scale;
         r = Math.sqrt(scale * r);
         g = Math.sqrt(scale * g);
         b = Math.sqrt(scale * b);
