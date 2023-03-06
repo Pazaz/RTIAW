@@ -7,14 +7,14 @@ import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
 import { CanvasRender } from './Render.js';
 import { clamp, sleep } from './Util.js';
-import { CheckerTexture, NoiseTexture, SolidColor } from './Texture.js';
+import { CheckerTexture, ImageTexture, NoiseTexture, SolidColor } from './Texture.js';
 
 /// ----
 
 let render = new CanvasRender(document.getElementById('canvas'));
 render.clear(vec3.create());
 
-const samplesPerPixel = 4;
+const samplesPerPixel = 20;
 const maxDepth = 50;
 
 // World
@@ -94,6 +94,15 @@ function twoPerlinSpheres() {
     return world;
 }
 
+async function earth() {
+    let world = new HittableList();
+
+    let earthTexture = await ImageTexture.load('earthmap.jpg');
+    world.add(new Sphere(vec3.fromValues(0, 0, 0), 2, new Lambertian(earthTexture)));
+
+    return world;
+}
+
 let world = null;
 let lookFrom = vec3.create();
 let lookAt = vec3.create();
@@ -117,7 +126,6 @@ switch (0) {
         lookAt = vec3.fromValues(0, 0, 0);
         vFov = 20.0;
         break;
-    default:
     case 3:
         world = twoPerlinSpheres();
         lookFrom = vec3.fromValues(13, 2, 3);
@@ -125,6 +133,13 @@ switch (0) {
         vFov = 20.0;
         aperture = 0.1;
         distToFocus = 12.0;
+        break;
+    default:
+    case 4:
+        world = await earth();
+        lookFrom = vec3.fromValues(13, 2, 3);
+        lookAt = vec3.fromValues(0, 0, 0);
+        vFov = 20.0;
         break;
 }
 
