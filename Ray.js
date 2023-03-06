@@ -17,25 +17,22 @@ export class Ray {
     }
 }
 
-export function rayColor(r, world, depth) {
+export function rayColor(r, background, world, depth) {
     if (depth <= 0) {
-        return vec3.fromValues(0, 0, 0);
+        return vec3.create();
     }
 
     let rec = new HitRecord();
-    if (world.hit(r, 0.001, Infinity, rec)) {
-        let scattered = new Ray();
-        let attenuation = vec3.create();
-
-        if (rec.material.scatter(r, rec, attenuation, scattered)) {
-            return vec3.mul(vec3.create(), attenuation, rayColor(scattered, world, depth - 1));
-        }
-
-        return vec3.fromValues(0, 0, 0);
+    if (!world.hit(r, 0.001, Infinity, rec)) {
+        return background;
     }
 
-    // draw sky
-    let unitDirection = vec3.normalize(vec3.create(), r.direction);
-    let t = 0.5 * (unitDirection[1] + 1.0);
-    return vec3.add(vec3.create(), vec3.scale(vec3.create(), vec3.fromValues(1.0, 1.0, 1.0), 1.0 - t), vec3.scale(vec3.create(), vec3.fromValues(0.5, 0.7, 1.0), t));
+    let scattered = new Ray();
+    let attenuation = vec3.create();
+
+    if (rec.material.scatter(r, rec, attenuation, scattered)) {
+        return vec3.mul(vec3.create(), attenuation, rayColor(scattered, background, world, depth - 1));
+    }
+
+    return vec3.create();
 }

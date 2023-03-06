@@ -98,7 +98,13 @@ async function earth() {
     let world = new HittableList();
 
     let earthTexture = await ImageTexture.load('earthmap.jpg');
-    world.add(new Sphere(vec3.fromValues(0, 0, 0), 2, new Lambertian(earthTexture)));
+    world.add(new Sphere(vec3.create(), 2, new Lambertian(earthTexture)));
+
+    return world;
+}
+
+function simpleLight() {
+    let world = new HittableList();
 
     return world;
 }
@@ -109,37 +115,46 @@ let lookAt = vec3.create();
 let vFov = 40.0;
 let aperture = 0.0;
 let distToFocus = 10.0;
+let background = vec3.create();
 
 // Camera
 
-switch (0) {
+switch (3) {
     case 1:
         world = randomScene();
+        background = vec3.fromValues(0.70, 0.80, 1.00);
         lookFrom = vec3.fromValues(13, 2, 3);
-        lookAt = vec3.fromValues(0, 0, 0);
+        lookAt = vec3.create();
         vFov = 20.0;
         aperture = 0.1;
         break;
     case 2:
         world = twoSpheres();
+        background = vec3.fromValues(0.70, 0.80, 1.00);
         lookFrom = vec3.fromValues(13, 2, 3);
-        lookAt = vec3.fromValues(0, 0, 0);
+        lookAt = vec3.create();
         vFov = 20.0;
         break;
     case 3:
         world = twoPerlinSpheres();
+        background = vec3.fromValues(0.70, 0.80, 1.00);
         lookFrom = vec3.fromValues(13, 2, 3);
-        lookAt = vec3.fromValues(0, 0, 0);
+        lookAt = vec3.create();
         vFov = 20.0;
         aperture = 0.1;
         distToFocus = 12.0;
         break;
-    default:
     case 4:
         world = await earth();
+        background = vec3.fromValues(0.70, 0.80, 1.00);
         lookFrom = vec3.fromValues(13, 2, 3);
-        lookAt = vec3.fromValues(0, 0, 0);
+        lookAt = vec3.create();
         vFov = 20.0;
+        break;
+    default:
+    case 5:
+        world = simpleLight();
+        background = vec3.create();
         break;
 }
 
@@ -152,14 +167,14 @@ let average = [];
 
 for (let j = render.height - 1; j >= 0; --j) {
     for (let i = 0; i < render.width; ++i) {
-        let pixelColor = vec3.fromValues(0, 0, 0);
+        let pixelColor = vec3.create();
 
         let start = Date.now();
         for (let s = 0; s < samplesPerPixel; ++s) {
             let u = (i + Math.random()) / (render.width - 1);
             let v = (j + Math.random()) / (render.height - 1);
             let ray = camera.getRay(u, v);
-            vec3.add(pixelColor, pixelColor, rayColor(ray, world, maxDepth));
+            vec3.add(pixelColor, pixelColor, rayColor(ray, background, world, maxDepth));
         }
         let end = Date.now();
         average.push(end - start);
