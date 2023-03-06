@@ -3,37 +3,11 @@ import { HittableList, Sphere } from './Hittable.js';
 import { Lambertian, Metal, Dielectric } from './Material.js';
 import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
-
-let canvas = document.getElementById('canvas');
-
-let width = canvas.width;
-let height = canvas.height;
-let aspectRatio = width / height;
-
-let ctx = canvas.getContext('2d');
-let imageData = ctx.createImageData(width, height);
-
-function clearCanvas(color) {
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            setPixel(x, y, color);
-        }
-    }
-}
-
-function setPixel(x, y, color) {
-    let index = (x + y * width) * 4;
-    imageData.data[index + 0] = color.r() * 255;
-    imageData.data[index + 1] = color.g() * 255;
-    imageData.data[index + 2] = color.b() * 255;
-    imageData.data[index + 3] = 255;
-}
-
-function refresh() {
-    ctx.putImageData(imageData, 0, 0);
-}
+import { CanvasRender } from './Render.js';
 
 // ----
+
+let render = new CanvasRender(document.getElementById('canvas'));
 
 const samplesPerPixel = 1;
 const maxDepth = 4;
@@ -107,18 +81,18 @@ let lookAt = new Point3(0, 0, 0);
 let vup = new Vec3(0, 1, 0);
 let distToFocus = 10.0;
 let aperture = 0.1;
-let camera = new Camera(lookFrom, lookAt, vup, 20, aspectRatio, aperture, distToFocus);
+let camera = new Camera(lookFrom, lookAt, vup, 20, render.aspectRatio, aperture, distToFocus);
 
 let average = [];
 
-for (let j = 0; j < height; ++j) {
-    for (let i = 0; i < width; ++i) {
+for (let j = 0; j < render.height; ++j) {
+    for (let i = 0; i < render.width; ++i) {
         let pixelColor = new Color(0, 0, 0);
 
         let start = Date.now();
         for (let s = 0; s < samplesPerPixel; ++s) {
-            let u = (i + Math.random()) / (width - 1);
-            let v = (j + Math.random()) / (height - 1);
+            let u = (i + Math.random()) / (render.width - 1);
+            let v = (j + Math.random()) / (render.height - 1);
             let r = camera.getRay(u, v);
             pixelColor = pixelColor.add(rayColor(r, world, maxDepth));
         }
@@ -135,10 +109,10 @@ for (let j = 0; j < height; ++j) {
         b = Math.sqrt(scale * b);
 
         pixelColor = new Color(r, g, b);
-        setPixel(i, height - j, pixelColor);
+        render.setPixel(i, render.height - j, pixelColor);
     }
 }
-refresh();
+render.draw();
 
 let sum = 0;
 for (let i = 0; i < average.length; ++i) {
