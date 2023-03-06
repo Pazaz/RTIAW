@@ -14,7 +14,7 @@ import { CheckerTexture, SolidColor } from './Texture.js';
 let render = new CanvasRender(document.getElementById('canvas'));
 render.clear(vec3.create());
 
-const samplesPerPixel = 50;
+const samplesPerPixel = 4;
 const maxDepth = 50;
 
 // World
@@ -25,64 +25,93 @@ function randomScene() {
     let checker = new CheckerTexture(new SolidColor(vec3.fromValues(0.2, 0.3, 0.1)), new SolidColor(vec3.fromValues(0.9, 0.9, 0.9)));
     world.add(new Sphere(vec3.fromValues(0, -1000, 0), 1000, new Lambertian(checker)));
 
-    // for (let a = -11; a < 11; a++) {
-    //     for (let b = -11; b < 11; b++) {
-    //         let chooseMat = Math.random();
-    //         let center = vec3.fromValues(a + 0.9 * Math.random(), 0.2, b + 0.9 * Math.random());
+    for (let a = -11; a < 11; a++) {
+        for (let b = -11; b < 11; b++) {
+            let chooseMat = Math.random();
+            let center = vec3.fromValues(a + 0.9 * Math.random(), 0.2, b + 0.9 * Math.random());
 
-    //         if (vec3.distance(center, vec3.fromValues(4, 0.2, 0)) > 0.9) {
-    //             let sphereMaterial;
+            if (vec3.distance(center, vec3.fromValues(4, 0.2, 0)) > 0.9) {
+                let sphereMaterial;
 
-    //             let size = Math.random() * 0.2 + 0.1;
-    //             if (chooseMat < 0.8) {
-    //                 // diffuse
-    //                 let albedo = new SolidColor(vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random()));
-    //                 sphereMaterial = new Lambertian(albedo);
+                let size = Math.random() * 0.2 + 0.1;
+                if (chooseMat < 0.8) {
+                    // diffuse
+                    let albedo = new SolidColor(vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random()));
+                    sphereMaterial = new Lambertian(albedo);
 
-    //                 let chooseSphere = Math.random();
-    //                 if (chooseSphere < 0.5) {
-    //                     let center2 = vec3.add(vec3.create(), center, vec3.fromValues(0, Math.random() * 0.5, 0));
-    //                     world.add(new MovingSphere(center, center2, 0.0, 1.0, size, sphereMaterial));
-    //                 } else {
-    //                     world.add(new Sphere(center, size, sphereMaterial));
-    //                 }
-    //             } else if (chooseMat < 0.95) {
-    //                 // metal
-    //                 let albedo = new SolidColor(vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random()));
-    //                 let fuzz = Math.random() * 0.5;
-    //                 sphereMaterial = new Metal(albedo, fuzz);
-    //                 world.add(new Sphere(center, size, sphereMaterial));
-    //             } else {
-    //                 // glass
-    //                 sphereMaterial = new Dielectric(1.5);
-    //                 world.add(new Sphere(center, size, sphereMaterial));
-    //             }
-    //         }
-    //     }
-    // }
+                    let chooseSphere = Math.random();
+                    if (chooseSphere < 0.5) {
+                        let center2 = vec3.add(vec3.create(), center, vec3.fromValues(0, Math.random() * 0.5, 0));
+                        world.add(new MovingSphere(center, center2, 0.0, 1.0, size, sphereMaterial));
+                    } else {
+                        world.add(new Sphere(center, size, sphereMaterial));
+                    }
+                } else if (chooseMat < 0.95) {
+                    // metal
+                    let albedo = new SolidColor(vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random()));
+                    let fuzz = Math.random() * 0.5;
+                    sphereMaterial = new Metal(albedo, fuzz);
+                    world.add(new Sphere(center, size, sphereMaterial));
+                } else {
+                    // glass
+                    sphereMaterial = new Dielectric(1.5);
+                    world.add(new Sphere(center, size, sphereMaterial));
+                }
+            }
+        }
+    }
 
-    // let material1 = new Dielectric(1.5);
-    // world.add(new Sphere(vec3.fromValues(0, 1, 0), 1.0, material1));
+    let material1 = new Dielectric(1.5);
+    world.add(new Sphere(vec3.fromValues(0, 1, 0), 1.0, material1));
 
     let material2 = new Lambertian(new SolidColor(vec3.fromValues(0.4, 0.2, 0.1)));
     world.add(new Sphere(vec3.fromValues(-4, 1, 0), 1.0, material2));
 
-    // let material3 = new Metal(vec3.fromValues(0.7, 0.6, 0.5), 0.0);
-    // world.add(new Sphere(vec3.fromValues(4, 1, 0), 1.0, material3));
+    let material3 = new Metal(vec3.fromValues(0.7, 0.6, 0.5), 0.0);
+    world.add(new Sphere(vec3.fromValues(4, 1, 0), 1.0, material3));
 
     return world;
 }
 
-let world = new randomScene();
+function twoSpheres() {
+    let world = new HittableList();
+
+    let checker = new CheckerTexture(new SolidColor(vec3.fromValues(0.2, 0.3, 0.1)), new SolidColor(vec3.fromValues(0.9, 0.9, 0.9)));
+
+    world.add(new Sphere(vec3.fromValues(0, -10, 0), 10, new Lambertian(checker)));
+    world.add(new Sphere(vec3.fromValues(0, 10, 0), 10, new Lambertian(checker)));
+
+    return world;
+}
+
+let world = null;
+let lookFrom = vec3.create();
+let lookAt = vec3.create();
+let vFov = 40.0;
+let aperture = 0.0;
 
 // Camera
 
-let lookFrom = vec3.fromValues(13, 2, 3);
-let lookAt = vec3.fromValues(0, 0, 0);
+switch (0) {
+    case 1:
+        world = randomScene();
+        lookFrom = vec3.fromValues(13, 2, 3);
+        lookAt = vec3.fromValues(0, 0, 0);
+        vFov = 20.0;
+        aperture = 0.1;
+        break;
+    default:
+    case 2:
+        world = twoSpheres();
+        lookFrom = vec3.fromValues(13, 2, 3);
+        lookAt = vec3.fromValues(0, 0, 0);
+        vFov = 20.0;
+        break;
+}
+
 let vUp = vec3.fromValues(0, 1, 0);
 let distToFocus = 10.0;
-let aperture = 0.1;
-let camera = new Camera(lookFrom, lookAt, vUp, 20.0, render.aspectRatio, aperture, distToFocus, 0.0, 1.0);
+let camera = new Camera(lookFrom, lookAt, vUp, vFov, render.aspectRatio, aperture, distToFocus, 0.0, 1.0);
 
 // Render
 
