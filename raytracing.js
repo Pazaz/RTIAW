@@ -4,13 +4,15 @@ import { Lambertian, Metal, Dielectric } from './Material.js';
 import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
 import { CanvasRender } from './Render.js';
+import { sleep } from './Util.js';
 
 // ----
 
 let render = new CanvasRender(document.getElementById('canvas'));
+render.clear(new Color(0, 0, 0));
 
-const samplesPerPixel = 1;
-const maxDepth = 4;
+const samplesPerPixel = 8;
+const maxDepth = 50;
 
 function randomScene() {
     let world = new HittableList();
@@ -85,7 +87,7 @@ let camera = new Camera(lookFrom, lookAt, vup, 20, render.aspectRatio, aperture,
 
 let average = [];
 
-for (let j = 0; j < render.height; ++j) {
+for (let j = render.height - 1; j >= 0; --j) {
     for (let i = 0; i < render.width; ++i) {
         let pixelColor = new Color(0, 0, 0);
 
@@ -111,8 +113,10 @@ for (let j = 0; j < render.height; ++j) {
         pixelColor = new Color(r, g, b);
         render.setPixel(i, render.height - j, pixelColor);
     }
+
+    render.draw();
+    await sleep(1);
 }
-render.draw();
 
 let sum = 0;
 for (let i = 0; i < average.length; ++i) {

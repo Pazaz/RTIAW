@@ -16,3 +16,7 @@ export function downloadToFile(content, filename, contentType) {
 export function saveText(filename, content) {
     downloadToFile(content, filename, 'text/plain');
 }
+
+export async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
