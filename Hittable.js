@@ -1,10 +1,12 @@
-import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { vec3 } from './gl-matrix.js';
 
 export class HitRecord {
     p = vec3.create();
     normal = vec3.create();
     material = null;
     t = 0.0;
+    u = 0.0;
+    v = 0.0;
     frontFace = false;
 
     setFaceNormal(r, outwardNormal) {
@@ -16,8 +18,10 @@ export class HitRecord {
         vec3.copy(this.p, other.p);
         vec3.copy(this.normal, other.normal);
         this.t = other.t;
-        this.frontFace = other.frontFace;
+        this.u = other.u;
+        this.v = other.v;
         this.material = other.material;
+        this.frontFace = other.frontFace;
     }
 }
 
@@ -76,6 +80,14 @@ export class Sphere extends Hittable {
         this.material = material;
     }
 
+    getSphereUv(p) {
+        let phi = Math.atan2(p[2], p[0]);
+        let theta = Math.asin(p[1]);
+        let u = 1.0 - (phi + Math.PI) / (2.0 * Math.PI);
+        let v = (theta + Math.PI / 2.0) / Math.PI;
+        return [u, v];
+    }
+
     hit(r, tMin, tMax, rec) {
         let oc = vec3.sub(vec3.create(), r.origin, this.center);
         let a = vec3.squaredLength(r.direction);
@@ -103,6 +115,9 @@ export class Sphere extends Hittable {
         vec3.sub(outwardNormal, rec.p, this.center);
         vec3.scale(outwardNormal, outwardNormal, 1.0 / this.radius);
         rec.setFaceNormal(r, outwardNormal);
+        let [u, v] = this.getSphereUv(outwardNormal);
+        rec.u = u;
+        rec.v = v;
         rec.material = this.material;
 
         return true;

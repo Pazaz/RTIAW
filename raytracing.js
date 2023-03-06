@@ -1,4 +1,4 @@
-import { glMatrix, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { glMatrix, vec3 } from './gl-matrix.js';
 glMatrix.setMatrixArrayType(Array);
 
 import { HittableList, MovingSphere, Sphere } from './Hittable.js';
@@ -7,13 +7,14 @@ import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
 import { CanvasRender } from './Render.js';
 import { clamp, sleep } from './Util.js';
+import { CheckerTexture, SolidColor } from './Texture.js';
 
 /// ----
 
 let render = new CanvasRender(document.getElementById('canvas'));
 render.clear(vec3.create());
 
-const samplesPerPixel = 2;
+const samplesPerPixel = 50;
 const maxDepth = 50;
 
 // World
@@ -21,46 +22,53 @@ const maxDepth = 50;
 function randomScene() {
     let world = new HittableList();
 
-    let groundMaterial = new Lambertian(vec3.fromValues(0.5, 0.5, 0.5));
-    world.add(new Sphere(vec3.fromValues(0, -1000, 0), 1000, groundMaterial));
+    let checker = new CheckerTexture(new SolidColor(vec3.fromValues(0.2, 0.3, 0.1)), new SolidColor(vec3.fromValues(0.9, 0.9, 0.9)));
+    world.add(new Sphere(vec3.fromValues(0, -1000, 0), 1000, new Lambertian(checker)));
 
-    for (let a = -11; a < 11; a++) {
-        for (let b = -11; b < 11; b++) {
-            let chooseMat = Math.random();
-            let center = vec3.fromValues(a + 0.9 * Math.random(), 0.2, b + 0.9 * Math.random());
+    // for (let a = -11; a < 11; a++) {
+    //     for (let b = -11; b < 11; b++) {
+    //         let chooseMat = Math.random();
+    //         let center = vec3.fromValues(a + 0.9 * Math.random(), 0.2, b + 0.9 * Math.random());
 
-            if (vec3.distance(center, vec3.fromValues(4, 0.2, 0)) > 0.9) {
-                let sphereMaterial;
+    //         if (vec3.distance(center, vec3.fromValues(4, 0.2, 0)) > 0.9) {
+    //             let sphereMaterial;
 
-                if (chooseMat < 0.8) {
-                    // diffuse
-                    let albedo = vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random());
-                    sphereMaterial = new Lambertian(albedo);
-                    let center2 = vec3.add(vec3.create(), center, vec3.fromValues(0, Math.random() * 0.5, 0));
-                    world.add(new MovingSphere(center, center2, 0.0, 1.0, 0.2, sphereMaterial));
-                } else if (chooseMat < 0.95) {
-                    // metal
-                    let albedo = vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random());
-                    let fuzz = Math.random() * 0.5;
-                    sphereMaterial = new Metal(albedo, fuzz);
-                    world.add(new Sphere(center, 0.2, sphereMaterial));
-                } else {
-                    // glass
-                    sphereMaterial = new Dielectric(1.5);
-                    world.add(new Sphere(center, 0.2, sphereMaterial));
-                }
-            }
-        }
-    }
+    //             let size = Math.random() * 0.2 + 0.1;
+    //             if (chooseMat < 0.8) {
+    //                 // diffuse
+    //                 let albedo = new SolidColor(vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random()));
+    //                 sphereMaterial = new Lambertian(albedo);
 
-    let material1 = new Dielectric(1.5);
-    world.add(new Sphere(vec3.fromValues(0, 1, 0), 1.0, material1));
+    //                 let chooseSphere = Math.random();
+    //                 if (chooseSphere < 0.5) {
+    //                     let center2 = vec3.add(vec3.create(), center, vec3.fromValues(0, Math.random() * 0.5, 0));
+    //                     world.add(new MovingSphere(center, center2, 0.0, 1.0, size, sphereMaterial));
+    //                 } else {
+    //                     world.add(new Sphere(center, size, sphereMaterial));
+    //                 }
+    //             } else if (chooseMat < 0.95) {
+    //                 // metal
+    //                 let albedo = new SolidColor(vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random()));
+    //                 let fuzz = Math.random() * 0.5;
+    //                 sphereMaterial = new Metal(albedo, fuzz);
+    //                 world.add(new Sphere(center, size, sphereMaterial));
+    //             } else {
+    //                 // glass
+    //                 sphereMaterial = new Dielectric(1.5);
+    //                 world.add(new Sphere(center, size, sphereMaterial));
+    //             }
+    //         }
+    //     }
+    // }
 
-    let material2 = new Lambertian(vec3.fromValues(0.4, 0.2, 0.1));
+    // let material1 = new Dielectric(1.5);
+    // world.add(new Sphere(vec3.fromValues(0, 1, 0), 1.0, material1));
+
+    let material2 = new Lambertian(new SolidColor(vec3.fromValues(0.4, 0.2, 0.1)));
     world.add(new Sphere(vec3.fromValues(-4, 1, 0), 1.0, material2));
 
-    let material3 = new Metal(vec3.fromValues(0.7, 0.6, 0.5), 0.0);
-    world.add(new Sphere(vec3.fromValues(4, 1, 0), 1.0, material3));
+    // let material3 = new Metal(vec3.fromValues(0.7, 0.6, 0.5), 0.0);
+    // world.add(new Sphere(vec3.fromValues(4, 1, 0), 1.0, material3));
 
     return world;
 }

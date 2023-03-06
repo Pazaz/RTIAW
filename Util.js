@@ -1,4 +1,4 @@
-import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { vec3 } from './gl-matrix.js';
 
 export function degreesToRadians(degrees) {
     return degrees * Math.PI / 180;

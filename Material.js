@@ -1,4 +1,4 @@
-import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
+import { vec3 } from './gl-matrix.js';
 import { nearZero, randomInUnitSphere, randomUnitVector, reflect, refract } from './Util.js';
 
 export class Material {
@@ -26,7 +26,7 @@ export class Lambertian extends Material {
         scattered.origin = rec.p;
         scattered.direction = scatterDirection;
         scattered.time = rIn.time;
-        vec3.copy(attenuation, this.albedo);
+        vec3.copy(attenuation, this.albedo.value(rec.u, rec.v, rec.p));
         return true;
     }
 }
