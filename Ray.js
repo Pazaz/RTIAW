@@ -4,10 +4,12 @@ import { HitRecord } from './Hittable.js';
 export class Ray {
     origin;
     direction;
+    time;
 
-    constructor(origin, direction) {
+    constructor(origin, direction, time = 0.0) {
         this.origin = origin;
         this.direction = direction;
+        this.time = time;
     }
 
     at(t) {

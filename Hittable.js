@@ -108,3 +108,60 @@ export class Sphere extends Hittable {
         return true;
     }
 }
+
+export class MovingSphere extends Hittable {
+    center0 = vec3.create();
+    center1 = vec3.create();
+    time0 = 0.0;
+    time1 = 0.0;
+    radius = 0.0;
+    material = null;
+
+    constructor(center0, center1, time0, time1, radius, material) {
+        super();
+
+        this.center0 = center0;
+        this.center1 = center1;
+        this.time0 = time0;
+        this.time1 = time1;
+        this.radius = radius;
+        this.material = material;
+    }
+
+    center(time) {
+        return vec3.add(vec3.create(), this.center0, vec3.scale(vec3.create(), vec3.sub(vec3.create(), this.center1, this.center0), (time - this.time0) / (this.time1 - this.time0)));
+    }
+
+    hit(r, tMin, tMax, rec) {
+        let oc = vec3.sub(vec3.create(), r.origin, this.center(r.time));
+
+        let a = vec3.squaredLength(r.direction);
+        let halfB = vec3.dot(oc, r.direction);
+        let c = vec3.squaredLength(oc) - (this.radius * this.radius);
+
+        let discriminant = (halfB * halfB) - a * c;
+        if (discriminant < 0) {
+            return false;
+        }
+
+        let sqrtd = Math.sqrt(discriminant);
+
+        let root = (-halfB - sqrtd) / a;
+        if (root < tMin || tMax < root) {
+            root = (-halfB + sqrtd) / a;
+            if (root < tMin || tMax < root) {
+                return false;
+            }
+        }
+
+        rec.t = root;
+        rec.p = r.at(rec.t);
+        let outwardNormal = vec3.create();
+        vec3.sub(outwardNormal, rec.p, this.center(r.time));
+        vec3.scale(outwardNormal, outwardNormal, 1.0 / this.radius);
+        rec.setFaceNormal(r, outwardNormal);
+        rec.material = this.material;
+
+        return true;
+    }
+}

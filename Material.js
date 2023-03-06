@@ -25,6 +25,7 @@ export class Lambertian extends Material {
 
         scattered.origin = rec.p;
         scattered.direction = scatterDirection;
+        scattered.time = rIn.time;
         vec3.copy(attenuation, this.albedo);
         return true;
     }
@@ -46,6 +47,7 @@ export class Metal extends Material {
 
         scattered.origin = rec.p;
         scattered.direction = vec3.add(vec3.create(), reflected, vec3.scale(vec3.create(), randomInUnitSphere(), this.fuzz));
+        scattered.time = rIn.time;
         vec3.copy(attenuation, this.albedo);
         return true;
     }
@@ -80,6 +82,7 @@ export class Dielectric extends Material {
 
         scattered.origin = rec.p;
         scattered.direction = direction;
+        scattered.time = rIn.time;
         return true;
     }
 

@@ -1,5 +1,5 @@
 import { vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
-import { degreesToRadians, randomInUnitDisk } from './Util.js';
+import { degreesToRadians, random, randomInUnitDisk } from './Util.js';
 import { Ray } from './Ray.js';
 
 export class Camera {
@@ -11,8 +11,10 @@ export class Camera {
     v;
     w;
     lensRadius;
+    time0;
+    time1;
 
-    constructor(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, focusDistance) {
+    constructor(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, focusDistance, time0 = 0.0, time1 = 0.0) {
         let theta = degreesToRadians(vFov);
         let h = Math.tan(theta / 2.0);
         let viewportHeight = 2.0 * h;
@@ -33,6 +35,9 @@ export class Camera {
         this.lowerLeftCorner = vec3.sub(vec3.create(), step4, vec3.scale(vec3.create(), this.w, focusDistance));
 
         this.lensRadius = aperture / 2.0;
+
+        this.time0 = time0;
+        this.time1 = time1;
     }
 
     getRay(s, t) {
@@ -47,7 +52,8 @@ export class Camera {
 
         return new Ray(
             vec3.add(vec3.create(), this.origin, offset),
-            vec3.sub(vec3.create(), step5, offset)
+            vec3.sub(vec3.create(), step5, offset),
+            random(this.time0, this.time1)
         );
     }
 }

@@ -1,7 +1,7 @@
 import { glMatrix, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/+esm';
 glMatrix.setMatrixArrayType(Array);
 
-import { HittableList, Sphere } from './Hittable.js';
+import { HittableList, MovingSphere, Sphere } from './Hittable.js';
 import { Lambertian, Metal, Dielectric } from './Material.js';
 import { Camera } from './Camera.js';
 import { rayColor } from './Ray.js';
@@ -13,7 +13,7 @@ import { clamp, sleep } from './Util.js';
 let render = new CanvasRender(document.getElementById('canvas'));
 render.clear(vec3.create());
 
-const samplesPerPixel = 4;
+const samplesPerPixel = 2;
 const maxDepth = 50;
 
 // World
@@ -36,7 +36,8 @@ function randomScene() {
                     // diffuse
                     let albedo = vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random());
                     sphereMaterial = new Lambertian(albedo);
-                    world.add(new Sphere(center, 0.2, sphereMaterial));
+                    let center2 = vec3.add(vec3.create(), center, vec3.fromValues(0, Math.random() * 0.5, 0));
+                    world.add(new MovingSphere(center, center2, 0.0, 1.0, 0.2, sphereMaterial));
                 } else if (chooseMat < 0.95) {
                     // metal
                     let albedo = vec3.fromValues(Math.random() * Math.random(), Math.random() * Math.random(), Math.random() * Math.random());
@@ -64,26 +65,6 @@ function randomScene() {
     return world;
 }
 
-// let world = new HittableList();
-
-// let materialGround = new Lambertian(vec3.fromValues(0.8, 0.8, 0.0));
-// let materialCenter = new Lambertian(vec3.fromValues(0.1, 0.2, 0.5));
-// let materialLeft = new Dielectric(1.5);
-// let materialRight = new Metal(vec3.fromValues(0.8, 0.6, 0.2), 0.0);
-
-// world.add(new Sphere(vec3.fromValues(0, -100.5, -1), 100, materialGround));
-// world.add(new Sphere(vec3.fromValues(0, 0, -1), 0.5, materialCenter));
-// world.add(new Sphere(vec3.fromValues(-1, 0, -1), 0.5, materialLeft));
-// world.add(new Sphere(vec3.fromValues(-1, 0, -1), -0.45, materialLeft));
-// world.add(new Sphere(vec3.fromValues(1, 0, -1), 0.5, materialRight));
-
-// let lookFrom = vec3.fromValues(3, 3, 2);
-// let lookAt = vec3.fromValues(0, 0, -1);
-// let vUp = vec3.fromValues(0, 1, 0);
-// let distToFocus = vec3.length(vec3.sub(vec3.create(), lookFrom, lookAt));
-// let aperture = 2.0;
-// let camera = new Camera(lookFrom, lookAt, vUp, 20.0, render.aspectRatio, aperture, distToFocus);
-
 let world = new randomScene();
 
 // Camera
@@ -93,7 +74,7 @@ let lookAt = vec3.fromValues(0, 0, 0);
 let vUp = vec3.fromValues(0, 1, 0);
 let distToFocus = 10.0;
 let aperture = 0.1;
-let camera = new Camera(lookFrom, lookAt, vUp, 20.0, render.aspectRatio, aperture, distToFocus);
+let camera = new Camera(lookFrom, lookAt, vUp, 20.0, render.aspectRatio, aperture, distToFocus, 0.0, 1.0);
 
 // Render
 
